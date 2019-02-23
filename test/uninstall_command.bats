@@ -1,10 +1,7 @@
 #!/usr/bin/env bats
+# -*- shell-script -*-
 
 load test_helpers
-
-. $(dirname $BATS_TEST_DIRNAME)/lib/commands/reshim.sh
-. $(dirname $BATS_TEST_DIRNAME)/lib/commands/install.sh
-. $(dirname $BATS_TEST_DIRNAME)/lib/commands/uninstall.sh
 
 setup() {
   setup_asdf_dir

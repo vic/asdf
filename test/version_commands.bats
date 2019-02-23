@@ -2,8 +2,6 @@
 
 load test_helpers
 
-. $(dirname $BATS_TEST_DIRNAME)/lib/commands/version_commands.sh
-
 setup() {
   setup_asdf_dir
   install_dummy_plugin

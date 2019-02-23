@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+# -*- shell-script -*-
 
 load test_helpers
 
@@ -56,11 +57,12 @@ teardown() {
   [ "$status" -eq 0 ]
   [ "0" -eq "$(ls $ASDF_DIR/shims/dummy* | wc -l)" ]
 
-  run asdf reshim dummy
+  run asdf reshim dummy 1.0
+  echo "$status $output"
   [ "$status" -eq 0 ]
   [ "1" -eq "$(ls $ASDF_DIR/shims/dummy* | wc -l)" ]
 
-  run asdf reshim dummy
+  run asdf reshim dummy 1.0
   [ "$status" -eq 0 ]
   [ "1" -eq "$(ls $ASDF_DIR/shims/dummy* | wc -l)" ]
 }
@@ -79,7 +81,7 @@ teardown() {
   [ "0" -eq "$(ls $ASDF_DIR/shims/dummy* | wc -l)" ]
   [ "0" -eq "$(ls $ASDF_DIR/shims/subdir* | wc -l)" ]
 
-  run asdf reshim dummy
+  run asdf reshim dummy 1.0
   [ "$status" -eq 0 ]
   [ "1" -eq "$(ls $ASDF_DIR/shims/dummy* | wc -l)" ]
   [ "0" -eq "$(ls $ASDF_DIR/shims/subdir* | wc -l)" ]
@@ -92,6 +94,7 @@ teardown() {
   [ "$status" -eq 0 ]
   [ "0" -eq "$(ls $ASDF_DIR/shims/dummy* | wc -l)" ]
   run asdf reshim
+  echo "$output"
   [ "$status" -eq 0 ]
   [ "1" -eq "$(ls $ASDF_DIR/shims/dummy* | wc -l)" ]
 }

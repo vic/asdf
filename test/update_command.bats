@@ -2,7 +2,7 @@
 
 load test_helpers
 
-. $(dirname "$BATS_TEST_DIRNAME")/lib/commands/update.sh
+#. $(dirname "$BATS_TEST_DIRNAME")/lib/commands/update.sh
 
 setup() {
   setup_asdf_dir

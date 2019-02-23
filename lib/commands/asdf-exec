@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# -*- shell-script -*-
+
+# shellcheck source=lib/utils.sh
+source "$(dirname "$(dirname "$(dirname "$0")")")/lib/utils.sh"
+
+asdf_exec_command() {
+  local tool="${1-}"
+
+  if [ -z "$tool" ]; then
+    asdf_echo_error "usage: asdf exec <command> [args]"
+    return 1
+  fi
+
+  shift
+  local args=("${@+$@}")
+
+  IFS=' ' read -r plugin full_version <<<"$(asdf_shim_select_version "$tool")"
+
+  if [ -z "$full_version" ]; then
+    asdf_shim_error_none_selected "$tool"
+    return $?
+  fi
+
+  asdf_plugin_inside_env "$plugin" "$full_version" asdf_exec_command_inside_env "$tool" "${args[@]+${args[@]}}"
+}
+
+asdf_exec_command_inside_env() {
+  local shim_name args path executable
+  shim_name="$1"
+  shift
+  args=("${@+$@}")
+
+  path="$(asdf_exec_path_inside_env "$shim_name")"
+  executable="$(PATH="$path" asdf_which_executable_inside_env "$shim_name")"
+
+  local shims_dir
+  shims_dir="$(asdf_data_dir)/shims"
+  (
+    # make sure asdf shims are at tail of path
+    PATH="$path:$shims_dir"
+    asdf_run_hook_inside_env "pre_${plugin_name}_${shim_name}" "${args[@]+${args[@]}}"
+    "$executable" "${args[@]+${args[@]}}"
+    asdf_run_hook_inside_env "post_${plugin_name}_${shim_name}" "${args[@]+${args[@]}}"
+  )
+}
+
+
+asdf_exec_command "$@"

@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+# -*- shell-script -*-
 
 load test_helpers
 
@@ -23,7 +24,7 @@ teardown() {
 
   run asdf current "dummy"
   [ "$status" -eq 0 ]
-  [ "$output" = "1.1.0    (set by $PROJECT_DIR/.tool-versions)" ]
+  [ "$output" = "1.1.0 # set by $PROJECT_DIR/.tool-versions" ]
 }
 
 @test "current should handle long version name" {
@@ -32,16 +33,19 @@ teardown() {
 
   run asdf current "dummy"
   [ "$status" -eq 0 ]
-  [ "$output" = "nightly-2000-01-01 (set by $PROJECT_DIR/.tool-versions)" ]
+  [ "$output" = "nightly-2000-01-01 # set by $PROJECT_DIR/.tool-versions" ]
 }
 
 @test "current should handle multiple versions" {
   cd $PROJECT_DIR
-  echo "dummy 1.2.0 1.1.0" >> $PROJECT_DIR/.tool-versions
+  echo "dummy 1.2.0" >> $PROJECT_DIR/.tool-versions
+  echo "dummy 1.1.0" >> $PROJECT_DIR/.tool-versions
 
   run asdf current "dummy"
+  echo "$output"
   [ "$status" -eq 0 ]
-  [ "$output" = "1.2.0 1.1.0 (set by $PROJECT_DIR/.tool-versions)" ]
+  echo "$output" | grep "1.2.0 # set by $PROJECT_DIR/.tool-versions"
+  echo "$output" | grep "1.1.0 # set by $PROJECT_DIR/.tool-versions"
 }
 
 
@@ -52,7 +56,7 @@ teardown() {
 
   run asdf current "dummy"
   [ "$status" -eq 0 ]
-  [ "$output" = "1.2.0    (set by $PROJECT_DIR/.dummy-version)" ]
+  [ "$output" = "1.2.0 # set by legacy file $PROJECT_DIR/.dummy-version" ]
 }
 
 @test "current should error when the plugin doesn't exist" {
@@ -74,7 +78,7 @@ teardown() {
 
   run asdf current "dummy"
   [ "$status" -eq 1 ]
-  [ "$output" = "version 9.9.9 is not installed for dummy" ]
+  [ "$output" = "dummy 9.9.9 # NOT INSTALLED # set by ${PROJECT_DIR}/.tool-versions" ]
 }
 
 @test "should output all plugins when no plugin passed" {
@@ -92,9 +96,9 @@ teardown() {
   echo 'foobar 1.0.0' >> $PROJECT_DIR/.tool-versions
 
   run asdf current
-  expected="baz            No version set for baz; please run \`asdf <global | local> baz <version>\`
-dummy          1.1.0    (set by $PROJECT_DIR/.tool-versions)
-foobar         1.0.0    (set by $PROJECT_DIR/.tool-versions)"
+  echo "$status $output"
+  expected="dummy 1.1.0 # set by $PROJECT_DIR/.tool-versions
+foobar 1.0.0 # set by $PROJECT_DIR/.tool-versions"
 
   [ "$expected" = "$output" ]
 }
@@ -118,6 +122,6 @@ foobar         1.0.0    (set by $PROJECT_DIR/.tool-versions)"
 @test "with no plugins prints an error" {
   clean_asdf_dir
   run asdf current
-  [ "$status" -eq 0 ]
-  echo "$output" | grep "Oohes nooes ~! No plugins installed"
+  [ "$status" -eq 1 ]
+  echo "$output" | grep "No tool versions set."
 }

@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+# -*- mode: shell-script -*-
 
 load test_helpers
 
@@ -16,11 +17,11 @@ teardown() {
 
 @test "install_command installs the correct version" {
   run asdf install dummy 1.1
-  [ "$status" -eq 0 ]
   [ $(cat $ASDF_DIR/installs/dummy/1.1/version) = "1.1" ]
+  [ "$status" -eq 0 ]
 }
 
-@test "install_command installs even if the user is terrible and does not use newlines" {
+@test "install_command installs even if the tools file does not use newlines" {
   cd $PROJECT_DIR
   echo -n 'dummy 1.2' > ".tool-versions"
   run asdf install
@@ -50,6 +51,7 @@ teardown() {
 
 @test "install_command should create a shim with asdf-plugin metadata" {
   run asdf install dummy 1.0
+  echo "${status} ${lines[*]}"
   [ "$status" -eq 0 ]
   [ -f $ASDF_DIR/installs/dummy/1.0/env ]
   run grep "asdf-plugin: dummy 1.0" $ASDF_DIR/shims/dummy
@@ -98,6 +100,7 @@ teardown() {
 
   # execute the generated shim
   run $ASDF_DIR/shims/dummy world hello
+  echo "$status ${output}"
   [ "$status" -eq 0 ]
   [ "$output" == "This is Dummy 1.0! hello world" ]
 }
@@ -142,7 +145,8 @@ pre_asdf_install_dummy = echo will install dummy $1
 EOM
 
   run asdf install dummy 1.0
-  [ "$output" == "will install dummy 1.0" ]
+  echo "$status // ${lines[@]}"
+  [ "$output" = "will install dummy 1.0" ]
 }
 
 @test "install command executes configured post plugin install hook" {
@@ -151,5 +155,6 @@ post_asdf_install_dummy = echo HEY $version FROM $plugin_name
 EOM
 
   run asdf install dummy 1.0
+  echo "$status $output"
   [ "$output" == "HEY 1.0 FROM dummy" ]
 }

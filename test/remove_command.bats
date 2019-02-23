@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+# -*- shell-script -*-
 
 load test_helpers
 

@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 
-# shellcheck source=lib/utils.sh
-. "$(dirname "$BATS_TEST_DIRNAME")"/lib/utils.sh
-
 setup_asdf_dir() {
-  BASE_DIR=$(mktemp -dt asdf.XXXX)
-  HOME=$BASE_DIR/home
-  ASDF_DIR=$HOME/.asdf
+  export BASE_DIR=$(mktemp -dt asdf.XXXX)
+  export HOME=$BASE_DIR/home
+  export ASDF_DIR=$HOME/.asdf
   mkdir -p "$ASDF_DIR/plugins"
   mkdir -p "$ASDF_DIR/installs"
   mkdir -p "$ASDF_DIR/shims"
@@ -14,13 +11,16 @@ setup_asdf_dir() {
   ASDF_BIN=$(dirname "$BATS_TEST_DIRNAME")/bin
 
   # shellcheck disable=SC2031
-  PATH=$ASDF_BIN:$ASDF_DIR/shims:$PATH
+  export PATH=$ASDF_BIN:$ASDF_DIR/shims:$PATH
 }
 
 install_mock_plugin() {
   local plugin_name=$1
   local location="${2:-$ASDF_DIR}"
   cp -r "$BATS_TEST_DIRNAME/fixtures/dummy_plugin" "$location/plugins/$plugin_name"
+  if [ "dummy" != "$plugin_name" ]; then
+    find "$location/plugins/$plugin_name/bin" -type f -maxdepth 1 -print0 | xargs -0 sed -i -e "s/[dD]ummy/${plugin_name}/"
+  fi
 }
 
 install_mock_plugin_version() {

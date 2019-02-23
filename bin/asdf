@@ -1,109 +1,140 @@
 #!/usr/bin/env bash
 
-# shellcheck source=lib/utils.sh
-source "$(dirname "$(dirname "$0")")/lib/utils.sh"
+asdf() {
+  set -eEu -o pipefail # bash strict mode
+  IFS=$'\t\n' # Stricter IFS settings
+  # shopt -s extdebug # for development
 
-load_cmd() {
-  for cmd in "$@"; do
-    # shellcheck disable=SC1091
-    source "$(dirname "$(dirname "$0")")/lib/commands/$cmd.sh"
-  done
+  local base_dir path cmd
+  base_dir="$(dirname "$(dirname "$0")")"
+  path="$base_dir/lib/commands:$PATH"
+
+  cmd=$(PATH=$path command -v "asdf-$1") && {
+    shift 1
+    "$cmd" "$@"
+    return $?
+  }
+
+  cmd=$(PATH=$path command -v "asdf-$1-$2") && {
+    shift 2
+    "$cmd" "$@"
+    return $?
+  }
+
+  case "$1" in
+    "--version")
+      echo "VERSION"
+      ;;
+    *)
+      echo "HELP"
+      # asdf_cmd "help"
+      ;;
+  esac
 }
 
-cmd_args=("${@:2}")
+asdf "$@"
 
-case "$1" in
-
-  "exec")
-    load_cmd "shim-exec"
-    shim_exec_command "${cmd_args[@]}";;
-
-  "env")
-    load_cmd "shim-env"
-    shim_env_command "${cmd_args[@]}";;
-
-  "where")
-    load_cmd "where"
-    where_command "${cmd_args[@]}";;
-
-  "which")
-    load_cmd "which"
-    which_command "${cmd_args[@]}";;
-
-  "update")
-    load_cmd "update"
-    update_command "${cmd_args[@]}";;
-
-  "install")
-    load_cmd "install" "reshim"
-    install_command "${cmd_args[@]}";;
-
-  "uninstall")
-    load_cmd "uninstall" "reshim"
-    uninstall_command "${cmd_args[@]}";;
-
-  "current")
-    load_cmd "current" "plugin-list"
-    current_command "${cmd_args[@]}";;
-
-  "local")
-    load_cmd "version_commands"
-    local_command "${cmd_args[@]}";;
-
-  "global")
-    load_cmd "version_commands"
-    global_command "${cmd_args[@]}";;
-
-  "list")
-    load_cmd "list"
-    list_command "${cmd_args[@]}";;
-
-  "list-all")
-    load_cmd "list-all"
-    list_all_command "${cmd_args[@]}";;
-
-  "reshim")
-    load_cmd "reshim"
-    reshim_command "${cmd_args[@]}";;
-
-  "plugin-add")
-    load_cmd "plugin-add"
-    plugin_add_command "${cmd_args[@]}";;
-
-  "plugin-list")
-    load_cmd "plugin-list"
-    plugin_list_command "${cmd_args[@]}";;
-
-  "plugin-list-all")
-    load_cmd "plugin-list-all"
-    plugin_list_all_command "${cmd_args[@]}";;
-
-  "plugin-update")
-    load_cmd "plugin-update"
-    plugin_update_command "${cmd_args[@]}";;
-
-  "plugin-remove")
-    load_cmd "plugin-remove"
-    plugin_remove_command "${cmd_args[@]}";;
-
-  # Undocumented commands for development
-  "plugin-push")
-    load_cmd "plugin-push"
-    plugin_push_command "${cmd_args[@]}";;
-
-  "plugin-test")
-    load_cmd "plugin-test"
-    plugin_test_command "${cmd_args[@]}";;
-
-  "shim-versions")
-    load_cmd "shim_versions"
-    shim_versions_command "${cmd_args[@]}";;
-
-  "--version")
-    asdf_version "${cmd_args[@]}";;
-
-  *)
-    load_cmd "help"
-    help_command
-    exit 1;;
-esac
+#load_cmd() {
+#  for cmd in "$@"; do
+#    # shellcheck disable=SC1091
+#    source "$(dirname "$(dirname "$0")")/lib/commands/$cmd.sh"
+#  done
+#}
+#
+#cmd_args=("${@:2}")
+#
+#case "$1" in
+#
+#  "exec")
+#    load_cmd "shim-exec"
+#    shim_exec_command "${cmd_args[@]}";;
+#
+#  "env")
+#    load_cmd "shim-env"
+#    shim_env_command "${cmd_args[@]}";;
+#
+#  "where")
+#    load_cmd "where"
+#    where_command "${cmd_args[@]}";;
+#
+#  "which")
+#    load_cmd "which"
+#    which_command "${cmd_args[@]}";;
+#
+#  "update")
+#    load_cmd "update"
+#    update_command "${cmd_args[@]}";;
+#
+#  "install")
+#    load_cmd "install" "reshim"
+#    install_command "${cmd_args[@]}";;
+#
+#  "uninstall")
+#    load_cmd "uninstall" "reshim"
+#    uninstall_command "${cmd_args[@]}";;
+#
+#  "current")
+#    load_cmd "current" "plugin-list"
+#    current_command "${cmd_args[@]}";;
+#
+#  "local")
+#    load_cmd "version_commands"
+#    local_command "${cmd_args[@]}";;
+#
+#  "global")
+#    load_cmd "version_commands"
+#    global_command "${cmd_args[@]}";;
+#
+#  "list")
+#    load_cmd "list"
+#    list_command "${cmd_args[@]}";;
+#
+#  "list-all")
+#    load_cmd "list-all"
+#    list_all_command "${cmd_args[@]}";;
+#
+#  "reshim")
+#    load_cmd "reshim"
+#    reshim_command "${cmd_args[@]}";;
+#
+#  "plugin-add")
+#    load_cmd "plugin-add"
+#    plugin_add_command "${cmd_args[@]}";;
+#
+#  "plugin-list")
+#    load_cmd "plugin-list"
+#    plugin_list_command "${cmd_args[@]}";;
+#
+#  "plugin-list-all")
+#    load_cmd "plugin-list-all"
+#    plugin_list_all_command "${cmd_args[@]}";;
+#
+#  "plugin-update")
+#    load_cmd "plugin-update"
+#    plugin_update_command "${cmd_args[@]}";;
+#
+#  "plugin-remove")
+#    load_cmd "plugin-remove"
+#    plugin_remove_command "${cmd_args[@]}";;
+#
+#  # Undocumented commands for development
+#  "plugin-push")
+#    load_cmd "plugin-push"
+#    plugin_push_command "${cmd_args[@]}";;
+#
+#  "plugin-test")
+#    load_cmd "plugin-test"
+#    plugin_test_command "${cmd_args[@]}";;
+#
+#  "shim-versions")
+#    load_cmd "shim_versions"
+#    shim_versions_command "${cmd_args[@]}";;
+#
+#  "--version")
+#    asdf_version "${cmd_args[@]}";;
+#
+#  *)
+#    load_cmd "help"
+#    help_command
+#    exit 1;;
+#esac

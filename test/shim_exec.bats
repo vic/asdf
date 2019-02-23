@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+# -*- shell-script -*-
 
 load test_helpers
 
@@ -37,7 +38,7 @@ teardown() {
   echo "dummy 1.0" > $PROJECT_DIR/.tool-versions
   run asdf install
 
-  path=$(echo "$PATH" | sed -e "s|$(asdf_data_dir)/shims||g; s|::|:|g")
+  path=$(echo "$PATH" | sed -e "s|${ASDF_DIR}/shims||g; s|::|:|g")
   run env PATH=$path which dummy
   [ "$output" == "" ]
   [ "$status" -eq 1 ]
@@ -59,11 +60,14 @@ teardown() {
 @test "shim exec should pass stdin to executable" {
   echo "dummy 1.0" > $PROJECT_DIR/.tool-versions
   run asdf install
+  [ "$status" -eq 0 ]
 
   echo "tr [:lower:] [:upper:]" > $ASDF_DIR/installs/dummy/1.0/bin/upper
   chmod +x $ASDF_DIR/installs/dummy/1.0/bin/upper
 
   run asdf reshim dummy 1.0
+  [ "$status" -eq 0 ]
+  [ -x "$ASDF_DIR/shims/upper" ]
 
   run echo $(echo hello | $ASDF_DIR/shims/upper)
   [ "$output" == "HELLO" ]
@@ -77,7 +81,7 @@ teardown() {
 
   run $ASDF_DIR/shims/dummy world hello
   [ "$status" -eq 126 ]
-  echo "$output" | grep -q "No version set for command dummy" 2>/dev/null
+  echo "$output" | grep -q "No version selected for command dummy" 2>/dev/null
 }
 
 @test "shim exec should suggest which plugin to use when no version is selected" {
@@ -89,8 +93,8 @@ teardown() {
   run $ASDF_DIR/shims/dummy world hello
   [ "$status" -eq 126 ]
 
-  echo "$output" | grep -q "No version set for command dummy" 2>/dev/null
-  echo "$output" | grep -q "you might want to add one of the following in your .tool-versions file" 2>/dev/null
+  echo "$output" | grep -q "No version selected for command dummy" 2>/dev/null
+  echo "$output" | grep -q "Add one of the following to your .tool-versions file" 2>/dev/null
   echo "$output" | grep -q "dummy 1.0" 2>/dev/null
   echo "$output" | grep -q "dummy 2.0" 2>/dev/null
 }
@@ -107,8 +111,8 @@ teardown() {
   run $ASDF_DIR/shims/dummy world hello
   [ "$status" -eq 126 ]
 
-  echo "$output" | grep -q "No version set for command dummy" 2>/dev/null
-  echo "$output" | grep -q "you might want to add one of the following in your .tool-versions file" 2>/dev/null
+  echo "$output" | grep -q "No version selected for command dummy" 2>/dev/null
+  echo "$output" | grep -q "Add one of the following to your .tool-versions file" 2>/dev/null
   echo "$output" | grep -q "dummy 1.0" 2>/dev/null
   echo "$output" | grep -q "mummy 3.0" 2>/dev/null
 }
@@ -200,6 +204,7 @@ teardown() {
   echo 'echo $FOO custom' > $ASDF_DIR/plugins/dummy/shims/foo
   chmod +x $ASDF_DIR/plugins/dummy/shims/foo
   run asdf reshim dummy 2.0
+  [ "$status" == "0" ]
 
   echo "dummy 2.0" > $PROJECT_DIR/.tool-versions
   run $ASDF_DIR/shims/foo
@@ -289,10 +294,8 @@ teardown() {
   chmod +x $PROJECT_DIR/sys/dummy
 
   run env PATH=$PATH:$PROJECT_DIR/sys $ASDF_DIR/shims/dummy
-  echo $status $output
-  [ "$output" == "$ASDF_DIR/shims/dummy" ]
+  [ "$output" == "$PROJECT_DIR/sys/dummy" ]
 }
-
 
 @test "shim exec can take version from legacy file if configured" {
   run asdf install dummy 2.0
@@ -325,6 +328,7 @@ teardown() {
   chmod +x $custom_path/foo
 
   run asdf reshim dummy 1.0
+  [ "$status" == "0" ]
 
   run $ASDF_DIR/shims/foo
   [ "$output" == "CUSTOM" ]
@@ -346,6 +350,7 @@ teardown() {
   echo "dummy 1.0" > $PROJECT_DIR/.tool-versions
 
   run $ASDF_DIR/shims/dummy
+  echo "$status $output"
   [ "$output" == "CUSTOM" ]
 }
 

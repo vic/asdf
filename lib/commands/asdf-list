@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# -*- shell-script -*-
+
+# shellcheck source=lib/utils.sh
+source "$(dirname "$(dirname "$(dirname "$0")")")/lib/utils.sh"
+
+asdf_list_command() {
+  test "$#" -eq "0" && {
+    asdf_list_all_tools
+    return $?
+  }
+  asdf_list_all_tools | grep "$1" | awk '{print$2}'
+}
+
+asdf_list_all_tools() {
+  asdf_shim_all_versions | asdf_pipe_empty asdf_installed_versions
+}
+
+asdf_list_command "$@"

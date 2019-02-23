@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# -*- shell-script -*-
+
+# shellcheck source=lib/utils.sh
+source "$(dirname "$(dirname "$(dirname "$0")")")/lib/utils.sh"
+
+asdf_env_command() {
+  local tool="${1-}"
+  if [ -z "$tool" ]; then
+    asdf_echo_error "usage: asdf env <command>"
+    return 1
+  fi
+
+  shift
+  test "$#" -eq "0" && set "env"
+  local args=("${@+$@}")
+
+  IFS=' ' read -r plugin full_version <<<"$(asdf_shim_select_version "$tool" 2>/dev/null)"
+
+  if [ -z "$full_version" ]; then
+    asdf_echo_error "no command: $tool. Perhaps you have to asdf reshim?"
+    return 1
+  fi
+
+  asdf_plugin_inside_env "$plugin" "$full_version" asdf_env_command_inside_env "${args[@]}"
+}
+
+asdf_env_command_inside_env() {
+  local args=("${@+$@}")
+  local shim_name="${tool-}"
+  local full_version="${full_version-}"
+
+  local path
+  path="$(asdf_exec_path_inside_env "$shim_name"):$(asdf_data_dir)/shims"
+  PATH="$path" "${args[@]+${args[@]}}"
+}
+
+
+asdf_env_command "$@"

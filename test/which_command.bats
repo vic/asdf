@@ -1,9 +1,7 @@
 #!/usr/bin/env bats
+# -*- shell-script -*-
 
 load test_helpers
-
-. $(dirname $BATS_TEST_DIRNAME)/lib/commands/which.sh
-. $(dirname $BATS_TEST_DIRNAME)/lib/commands/install.sh
 
 setup() {
   setup_asdf_dir
@@ -32,7 +30,7 @@ teardown() {
 
   run asdf which "sunny"
   [ "$status" -eq 1 ]
-  [ "$output" == "unknown command: sunny. Perhaps you have to reshim?" ]
+  echo "$output" | grep "no command: sunny. Perhaps you have to asdf reshim?"
 }
 
 @test "which should show dummy 1.0 other binary" {
@@ -65,6 +63,7 @@ teardown() {
   cd $PROJECT_DIR
 
   run asdf which "dummy"
+  echo "$status $output"
   [ "$status" -eq 1 ]
   [ "$output" == "No dummy executable found for dummy system" ]
 }
@@ -74,7 +73,7 @@ teardown() {
 
   run asdf which "bazbat"
   [ "$status" -eq 1 ]
-  [ "$output" == "unknown command: bazbat. Perhaps you have to reshim?" ]
+  [ "$output" == "no command: bazbat. Perhaps you have to asdf reshim?" ]
 }
 
 @test "which should use path returned by exec-path when present" {

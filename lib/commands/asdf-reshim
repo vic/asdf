@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# -*- shell-script -*-
+
+# shellcheck source=lib/utils.sh
+source "$(dirname "$(dirname "$(dirname "$0")")")/lib/utils.sh"
+
+asdf_reshim_command() {
+  test "$#" -eq "0" && {
+    asdf_reshim_all_current_tools
+    return $?
+  }
+  test "$#" -eq "1" && {
+    asdf_reshim_current_tool "$1"
+    return $?
+  }
+  asdf_reshim_tool_at_version "$1" "$2"
+}
+
+asdf_reshim_current_tool() {
+  local plugin_name="$1"
+  asdf_shim_all_versions |\
+    asdf_pipe_empty asdf_installed_versions |\
+    grep "^$plugin_name " |\
+    asdf_pipe_empty asdf_reshim_err_no_version |\
+    asdf_fn_xargs asdf_reshim_tool_at_version
+}
+
+asdf_reshim_err_no_version() {
+  asdf_echo_error "You must specify a name and a version to reshim"
+  return 1
+}
+
+asdf_reshim_all_current_tools() {
+  asdf_shim_all_versions |\
+    asdf_pipe_empty asdf_installed_versions |\
+    asdf_pipe_empty asdf_reshim_err_no_version |\
+    asdf_fn_xargs asdf_reshim_tool_at_version
+}
+
+asdf_reshim_tool_at_version() {
+  local tool full_version
+  tool="${1}"
+  full_version="${2}"
+
+  asdf_run_hook_inside_env "pre_asdf_reshim_${tool}" "${full_version}"
+  asdf_reshim_remove_obsolete "$tool" "$full_version"
+  asdf_reshim_generate "$tool" "$full_version"
+  asdf_run_hook_inside_env "post_asdf_reshim_${tool}" "${full_version}"
+}
+
+asdf_reshim_remove_obsolete() {
+  local tool full_version
+  tool=${1}
+  full_version=${2}
+
+  comm -23 \
+       <(asdf_reshim_installed_shims "$tool" "$full_version" | sort) \
+       <(asdf_reshim_installed_bins "$tool" "$full_version" | sort) \
+    | asdf_fn_xargs asdf_reshim_remove "$tool" "$full_version"
+}
+
+asdf_reshim_installed_shims() {
+  local tool full_version shims_dir
+  tool="${1}"
+  full_version="${2}"
+
+  shims_dir="$(asdf_data_dir)/shims"
+
+  find "$shims_dir" -type f -mindepth 1 -maxdepth 1 -print0 |\
+    xargs -0 grep -H "# asdf-plugin: ${tool} ${full_version}" |\
+    cut -d':' -f 1 | xargs -I INSTALLED_SHIM basename INSTALLED_SHIM
+}
+
+asdf_reshim_installed_bins() {
+  local tool full_version
+  tool="${1}"
+  full_version="${2}"
+  asdf_installed_bin_files "$tool" "$full_version" | xargs -I INSTALLED_BIN basename INSTALLED_BIN | uniq
+}
+
+asdf_reshim_generate() {
+  local tool full_version
+  tool="${1}"
+  full_version="${2}"
+  asdf_reshim_installed_bins "$tool" "$full_version" | asdf_fn_xargs asdf_reshim_write "${tool}" "${full_version}"
+}
+
+asdf_reshim_remove() {
+  local plugin_name full_version shim_name
+  plugin_name="${1}"
+  full_version="${2}"
+  shim_name="${3}"
+
+  local shim_path
+  shim_path="$(asdf_data_dir)/shims/$shim_name"
+
+  sed -i.bak -e "/# asdf-plugin: $plugin_name $full_version/d" "$shim_path"
+  rm "$shim_path".bak
+
+  if ! grep "# asdf-plugin:" "$shim_path" > /dev/null ; then
+    rm "$shim_path"
+  fi
+}
+
+asdf_reshim_write() {
+  local plugin_name full_version shim_name
+  plugin_name="${1}"
+  full_version="${2}"
+  shim_name="${3}"
+
+  local shim_path
+  shim_path="$(asdf_data_dir)/shims/$shim_name"
+  mkdir -p $(dirname "$shim_path")
+
+  if [ -f "$shim_path" ]; then
+    if ! grep "# asdf-plugin: ${plugin_name} ${full_version}" "$shim_path" >/dev/null; then
+      sed -i.bak -e "s/exec /# asdf-plugin: ${plugin_name} ${full_version}\\"$'\n''exec /' "$shim_path"
+      rm "$shim_path".bak
+    fi
+  else
+    cat <<EOF > "$shim_path"
+#!/usr/bin/env bash
+# asdf-plugin: ${plugin_name} ${full_version}
+exec $(asdf_dir)/bin/asdf exec "${shim_name}" "\$@"
+EOF
+  fi
+
+  chmod +x "$shim_path"
+}
+
+asdf_reshim_command "$@"

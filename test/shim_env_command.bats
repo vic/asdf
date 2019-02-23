@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+# -*- shell-script -*-
 
 load test_helpers
 
@@ -47,13 +48,17 @@ teardown() {
 }
 
 @test "asdf env should ignore plugin custom environment on system version" {
-  echo "dummy 1.0" > $PROJECT_DIR/.tool-versions
-  run asdf install
+  run install_mock_plugin "tummy"
 
   echo "export FOO=bar" > $ASDF_DIR/plugins/dummy/bin/exec-env
   chmod +x $ASDF_DIR/plugins/dummy/bin/exec-env
 
+  run asdf install dummy 1.0
+  run asdf install tummy 1.0
+
   echo "dummy system" > $PROJECT_DIR/.tool-versions
+  echo "tummy 1.0" >> $PROJECT_DIR/.tool-versions
+
 
   run asdf env dummy
   [ "$status" -eq 0 ]
@@ -62,7 +67,7 @@ teardown() {
   [ "$output" == "" ]
   [ "$status" -eq 1 ]
 
-  run asdf env dummy which dummy
-  [ "$output" == "$ASDF_DIR/shims/dummy" ]
+  run asdf env dummy tummy
+  [ "$output" == "This is tummy 1.0!" ]
   [ "$status" -eq 0 ]
 }

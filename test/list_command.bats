@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+# -*- shell-script -*-
 
 load test_helpers
 
@@ -15,7 +16,7 @@ teardown() {
   run asdf install dummy 1.0
   run asdf install dummy 1.1
   run asdf list
-  [ "$(echo -e "dummy\n  1.0\n  1.1")" == "$output" ]
+  [ "$(echo -e "dummy 1.0\ndummy 1.1")" == "$output" ]
   [ "$status" -eq 0 ]
 }
 
@@ -26,7 +27,7 @@ teardown() {
   run asdf install dummy 1.0
   run asdf install tummy 2.0
   run asdf list
-  [ "$(echo -e "dummy\n  1.0\nmummy\nNo versions installed\ntummy\n  2.0")" == "$output" ]
+  [ "$(echo -e "dummy 1.0\ntummy 2.0")" == "$output" ]
   [ "$status" -eq 0 ]
 }
 
@@ -34,6 +35,6 @@ teardown() {
   run asdf install dummy 1.0
   run asdf install dummy 1.1
   run asdf list dummy
-  [ "$(echo -e "  1.0\n  1.1")" == "$output" ]
+  [ "$(echo -e "1.0\n1.1")" == "$output" ]
   [ "$status" -eq 0 ]
 }
