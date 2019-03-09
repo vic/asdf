@@ -86,7 +86,9 @@ asdf_user_config_file() {
 }
 
 asdf_default_config_file() {
-  asdf_file_exists "$(asdf_dir)/defaults"
+  local default
+  default="$(asdf_dir)/defaults"
+  asdf_file_exists "${ASDF_CONFIG_DEFAULT_FILE:-${default}}"
 }
 
 asdf_strip_comments() {

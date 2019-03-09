@@ -14,6 +14,13 @@ setup_asdf_dir() {
   export PATH=$ASDF_BIN:$ASDF_DIR/shims:$PATH
 }
 
+invoke_asdf_util() {
+  ( # utils.sh sets bash strict mode, use a subshell to prevent bats from not working
+    source $(dirname "$BATS_TEST_DIRNAME")/lib/utils.sh
+    $*
+  )
+}
+
 install_mock_plugin() {
   local plugin_name=$1
   local location="${2:-$ASDF_DIR}"

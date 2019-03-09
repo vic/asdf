@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+# -*- shell-script -*-
 
 load test_helpers
 
@@ -6,7 +7,7 @@ setup() {
     ASDF_CONFIG_FILE=$BATS_TMPDIR/asdfrc
     cat > $ASDF_CONFIG_FILE <<-EOM
 key1 = value1
-legacy_version_file = yes
+legacy_version_file=yes # key value without spaces
 EOM
 
     ASDF_CONFIG_DEFAULT_FILE=$BATS_TMPDIR/asdfrc_defaults
@@ -25,15 +26,15 @@ teardown() {
 }
 
 @test "get_config returns default when config file does not exist" {
-    result=$(ASDF_CONFIG_FILE="/some/fake/path" get_asdf_config_value "legacy_version_file")
+    result=$(ASDF_CONFIG_FILE="/some/fake/path" invoke_asdf_util asdf_read_config_value "legacy_version_file")
     [ "$result" = "no" ]
 }
 
 @test "get_config returns default value when the key does not exist" {
-    [ $(get_asdf_config_value "key2") = "value2" ]
+    [ $(invoke_asdf_util asdf_read_config_value "key2") = "value2" ]
 }
 
 @test "get_config returns config file value when key exists" {
-    [ $(get_asdf_config_value "key1") = "value1" ]
-    [ $(get_asdf_config_value "legacy_version_file") = "yes" ]
+    [ $(invoke_asdf_util asdf_read_config_value "key1") = "value1" ]
+    [ $(invoke_asdf_util asdf_read_config_value "legacy_version_file") = "yes" ]
 }
