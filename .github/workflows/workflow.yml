@@ -14,7 +14,7 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [macOS-latest, ubuntu-latest]
+        os: [macOS-latest, ubuntu-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
 
@@ -41,6 +41,7 @@ jobs:
           git clone https://github.com/bats-core/bats-core.git $HOME/bats-core
 
       - name: Run tests
+        shell: bash
         run: |
           export PATH=$HOME/bats-core/bin:$PATH
           bats test
